@@ -1,0 +1,1250 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>WordMatch - İngilizce Kelime Öğrenme Oyunu</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #12121a;
+            --bg-card: #1a1a25;
+            --text-primary: #ffffff;
+            --text-secondary: #8b8b9e;
+            --accent: #6366f1;
+            --accent-glow: rgba(99, 102, 241, 0.4);
+            --success: #10b981;
+            --error: #ef4444;
+            --warning: #f59e0b;
+            
+            /* Rank Colors */
+            --bronze: #cd7f32;
+            --bronze-glow: rgba(205, 127, 50, 0.5);
+            --silver: #c0c0c0;
+            --silver-glow: rgba(192, 192, 192, 0.5);
+            --gold: #ffd700;
+            --gold-glow: rgba(255, 215, 0, 0.5);
+            --platinum: #00d4ff;
+            --platinum-glow: rgba(0, 212, 255, 0.5);
+            --emerald: #50c878;
+            --emerald-glow: rgba(80, 200, 120, 0.5);
+            --diamond: #b9f2ff;
+            --diamond-glow: rgba(185, 242, 255, 0.5);
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        /* ===== ONBOARDING ===== */
+        .onboarding-overlay {
+            position: fixed;
+            inset: 0;
+            background: var(--bg-primary);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.5s, visibility 0.5s;
+        }
+        
+        .onboarding-overlay.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+        
+        .onboarding-content {
+            text-align: center;
+            padding: 2rem;
+            max-width: 400px;
+        }
+        
+        .onboarding-logo {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        
+        .onboarding-title {
+            font-size: 2.5rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--accent), #a855f7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+        
+        .onboarding-subtitle {
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+        }
+        
+        .start-btn {
+            background: linear-gradient(135deg, var(--accent), #8b5cf6);
+            border: none;
+            color: white;
+            padding: 1rem 3rem;
+            font-size: 1.2rem;
+            font-weight: 700;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 0 30px var(--accent-glow);
+        }
+        
+        .start-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 50px var(--accent-glow);
+        }
+        
+        /* ===== HEADER ===== */
+        .header {
+            background: linear-gradient(180deg, var(--bg-secondary) 0%, transparent 100%);
+            padding: 1rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .header-content {
+            max-width: 600px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--accent), #a855f7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .header-stats {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+        
+        .streak-badge {
+            background: linear-gradient(135deg, var(--warning), #dc2626);
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+        
+        .sound-btn {
+            background: var(--bg-card);
+            border: none;
+            color: var(--text-primary);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: all 0.3s;
+        }
+        
+        .sound-btn:hover {
+            background: var(--accent);
+        }
+        
+        /* ===== RANK DISPLAY ===== */
+        .rank-section {
+            padding: 1.5rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .rank-card {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 1.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .rank-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 20px;
+            padding: 2px;
+            background: linear-gradient(135deg, var(--current-rank-color, var(--bronze)), transparent);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+        }
+        
+        .rank-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .rank-badge {
+            width: 80px;
+            height: 90px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .rank-shield {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+        
+        .rank-shield svg {
+            width: 100%;
+            height: 100%;
+            filter: drop-shadow(0 0 15px var(--current-rank-glow, var(--bronze-glow)));
+        }
+        
+        .rank-icon {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -55%);
+            font-size: 2rem;
+        }
+        
+        .rank-info {
+            flex: 1;
+        }
+        
+        .rank-name {
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-bottom: 0.3rem;
+        }
+        
+        .rank-tier {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        
+        .stars-container {
+            display: flex;
+            gap: 0.3rem;
+            margin-top: 0.5rem;
+        }
+        
+        .star {
+            font-size: 1.5rem;
+            transition: all 0.3s;
+        }
+        
+        .star.filled {
+            filter: drop-shadow(0 0 8px var(--warning));
+        }
+        
+        .star.empty {
+            opacity: 0.3;
+        }
+        
+        /* Progress Bar */
+        .progress-section {
+            margin-top: 1rem;
+        }
+        
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .progress-bar {
+            height: 8px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--current-rank-color, var(--bronze)), var(--accent));
+            border-radius: 10px;
+            transition: width 0.5s ease;
+            box-shadow: 0 0 10px var(--current-rank-glow, var(--bronze-glow));
+        }
+        
+        /* ===== GAME AREA ===== */
+        .game-section {
+            padding: 1rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .level-badge {
+            background: var(--bg-card);
+            padding: 0.5rem 1rem;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+        
+        .score-display {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .score-item {
+            text-align: center;
+        }
+        
+        .score-value {
+            font-size: 1.5rem;
+            font-weight: 800;
+        }
+        
+        .score-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+        
+        /* Word Cards */
+        .game-board {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        
+        .word-column {
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+        }
+        
+        .column-title {
+            text-align: center;
+            font-weight: 600;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            padding: 0.5rem;
+        }
+        
+        .word-card {
+            background: var(--bg-card);
+            border: 2px solid transparent;
+            border-radius: 12px;
+            padding: 1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 600;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .word-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--accent);
+        }
+        
+        .word-card.selected {
+            border-color: var(--accent);
+            box-shadow: 0 0 20px var(--accent-glow);
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.2));
+        }
+        
+        .word-card.correct {
+            border-color: var(--success);
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(16, 185, 129, 0.1));
+            animation: correctPulse 0.5s ease;
+        }
+        
+        .word-card.wrong {
+            border-color: var(--error);
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(239, 68, 68, 0.1));
+            animation: shake 0.5s ease;
+        }
+        
+        .word-card.matched {
+            opacity: 0;
+            transform: scale(0.8);
+            pointer-events: none;
+        }
+        
+        @keyframes correctPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        
+        .word-text {
+            font-size: 1rem;
+        }
+        
+        .speak-icon {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            font-size: 0.8rem;
+            opacity: 0.5;
+        }
+        
+        /* ===== OVERLAYS ===== */
+        .overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 500;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+        }
+        
+        .overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .overlay-content {
+            text-align: center;
+            padding: 2rem;
+            animation: popIn 0.5s ease;
+        }
+        
+        @keyframes popIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        .celebration-icon {
+            font-size: 5rem;
+            margin-bottom: 1rem;
+            animation: bounce 1s infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+        
+        .celebration-title {
+            font-size: 2rem;
+            font-weight: 900;
+            margin-bottom: 0.5rem;
+        }
+        
+        .celebration-subtitle {
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+        }
+        
+        /* ===== JOURNEY MAP ===== */
+        .journey-section {
+            padding: 1.5rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .journey-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .journey-map {
+            display: flex;
+            gap: 0.5rem;
+            overflow-x: auto;
+            padding: 1rem 0;
+            scrollbar-width: none;
+        }
+        
+        .journey-map::-webkit-scrollbar {
+            display: none;
+        }
+        
+        .journey-node {
+            min-width: 70px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .journey-node::after {
+            content: '';
+            position: absolute;
+            top: 20px;
+            right: -0.5rem;
+            width: 0.5rem;
+            height: 2px;
+            background: var(--text-secondary);
+        }
+        
+        .journey-node:last-child::after {
+            display: none;
+        }
+        
+        .journey-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 0.5rem;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+        
+        .journey-node.completed .journey-icon {
+            background: var(--success);
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.5);
+        }
+        
+        .journey-node.current .journey-icon {
+            background: var(--accent);
+            box-shadow: 0 0 15px var(--accent-glow);
+            animation: pulse 2s infinite;
+        }
+        
+        .journey-node.locked .journey-icon {
+            background: var(--bg-card);
+            opacity: 0.5;
+        }
+        
+        .journey-label {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+        }
+        
+        /* ===== STATS SECTION ===== */
+        .stats-section {
+            padding: 1.5rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+        }
+        
+        .stat-card {
+            background: var(--bg-card);
+            border-radius: 15px;
+            padding: 1rem;
+            text-align: center;
+        }
+        
+        .stat-icon {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 800;
+        }
+        
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+        
+        /* ===== NOTIFICATION ===== */
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            background: var(--bg-card);
+            border-radius: 15px;
+            padding: 1rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        }
+        
+        .notification.show {
+            transform: translateX(-50%) translateY(0);
+        }
+        
+        .notification-icon {
+            font-size: 1.5rem;
+        }
+        
+        .notification-text {
+            font-weight: 600;
+        }
+        
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 400px) {
+            .word-card {
+                padding: 0.8rem;
+            }
+            
+            .word-text {
+                font-size: 0.9rem;
+            }
+            
+            .rank-badge {
+                width: 60px;
+                height: 70px;
+            }
+            
+            .rank-icon {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Onboarding -->
+    <div class="onboarding-overlay" id="onboarding">
+        <div class="onboarding-content">
+            <div class="onboarding-logo">📚</div>
+            <h1 class="onboarding-title">WordMatch</h1>
+            <p class="onboarding-subtitle">İngilizce kelimelerle eşleştirme yaparak öğren!</p>
+            <button class="start-btn" onclick="startGame()">🚀 Başla</button>
+        </div>
+    </div>
+    
+    <!-- Notification -->
+    <div class="notification" id="notification">
+        <span class="notification-icon">⭐</span>
+        <span class="notification-text" id="notificationText">Yıldız kazandın!</span>
+    </div>
+    
+    <!-- Star Celebration Overlay -->
+    <div class="overlay" id="starOverlay">
+        <div class="overlay-content">
+            <div class="celebration-icon">⭐</div>
+            <h2 class="celebration-title">Yıldız Kazandın!</h2>
+            <p class="celebration-subtitle" id="starMessage">Harika gidiyorsun!</p>
+            <button class="start-btn" onclick="hideStarOverlay()">Devam Et</button>
+        </div>
+    </div>
+    
+    <!-- Tier Up Overlay -->
+    <div class="overlay" id="tierOverlay">
+        <div class="overlay-content">
+            <div class="celebration-icon">🏆</div>
+            <h2 class="celebration-title" id="newTierTitle">Yeni Tier!</h2>
+            <p class="celebration-subtitle" id="tierMessage">Tebrikler!</p>
+            <button class="start-btn" onclick="hideTierOverlay()">Devam Et</button>
+        </div>
+    </div>
+    
+    <!-- Rank Up Overlay -->
+    <div class="overlay" id="rankOverlay">
+        <div class="overlay-content">
+            <div class="celebration-icon">👑</div>
+            <h2 class="celebration-title" id="newRankTitle">Yeni Rank!</h2>
+            <p class="celebration-subtitle" id="rankMessage">İnanılmaz!</p>
+            <button class="start-btn" onclick="hideRankOverlay()">Devam Et</button>
+        </div>
+    </div>
+    
+    <!-- Main App -->
+    <div class="app" id="app" style="display: none;">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">WordMatch</div>
+                <div class="header-stats">
+                    <div class="streak-badge">
+                        <span>🔥</span>
+                        <span id="streakCount">0</span>
+                    </div>
+                    <button class="sound-btn" id="soundBtn" onclick="toggleSound()">🔊</button>
+                </div>
+            </div>
+        </header>
+        
+        <!-- Rank Section -->
+        <section class="rank-section">
+            <div class="rank-card" id="rankCard">
+                <div class="rank-header">
+                    <div class="rank-badge">
+                        <div class="rank-shield">
+                            <svg viewBox="0 0 100 120" id="rankShield">
+                                <defs>
+                                    <linearGradient id="shieldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" id="gradStop1" stop-color="#cd7f32"/>
+                                        <stop offset="100%" id="gradStop2" stop-color="#8b4513"/>
+                                    </linearGradient>
+                                </defs>
+                                <path d="M50 5 L95 20 L95 60 Q95 95 50 115 Q5 95 5 60 L5 20 Z" 
+                                      fill="url(#shieldGradient)" 
+                                      stroke="rgba(255,255,255,0.3)" 
+                                      stroke-width="2"/>
+                            </svg>
+                            <span class="rank-icon" id="rankIcon">🥉</span>
+                        </div>
+                    </div>
+                    <div class="rank-info">
+                        <div class="rank-name" id="rankName">Bronze</div>
+                        <div class="rank-tier" id="rankTier">Tier IV</div>
+                        <div class="stars-container" id="starsContainer">
+                            <span class="star empty">⭐</span>
+                            <span class="star empty">⭐</span>
+                            <span class="star empty">⭐</span>
+                            <span class="star empty">⭐</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="progress-section">
+                    <div class="progress-label">
+                        <span id="progressText">0 / 37 kelime</span>
+                        <span id="progressPercent">0%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Game Section -->
+        <section class="game-section">
+            <div class="game-header">
+                <div class="level-badge" id="levelBadge">A1 Seviyesi</div>
+                <div class="score-display">
+                    <div class="score-item">
+                        <div class="score-value" id="correctCount">0</div>
+                        <div class="score-label">Doğru</div>
+                    </div>
+                    <div class="score-item">
+                        <div class="score-value" id="wrongCount">0</div>
+                        <div class="score-label">Yanlış</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="game-board">
+                <div class="word-column">
+                    <div class="column-title">🇬🇧 English</div>
+                    <div id="englishWords"></div>
+                </div>
+                <div class="word-column">
+                    <div class="column-title">🇹🇷 Türkçe</div>
+                    <div id="turkishWords"></div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Journey Map -->
+        <section class="journey-section">
+            <h3 class="journey-title">🗺️ Yolculuk</h3>
+            <div class="journey-map" id="journeyMap"></div>
+        </section>
+        
+        <!-- Stats -->
+        <section class="stats-section">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">📖</div>
+                    <div class="stat-value" id="totalLearned">0</div>
+                    <div class="stat-label">Öğrenilen</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🎯</div>
+                    <div class="stat-value" id="accuracy">0%</div>
+                    <div class="stat-label">Doğruluk</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">⚡</div>
+                    <div class="stat-value" id="bestStreak">0</div>
+                    <div class="stat-label">En İyi Seri</div>
+                </div>
+            </div>
+        </section>
+    </div>
+    
+    <!-- Words Database - External -->
+    <script src="words.js"></script>
+    
+    <script>
+        // ==================== RANK SYSTEM ====================
+        const RANKS = [
+            { name: 'Bronze', icon: '🥉', color: '#cd7f32', glow: 'rgba(205, 127, 50, 0.5)', level: 'A1' },
+            { name: 'Silver', icon: '🥈', color: '#c0c0c0', glow: 'rgba(192, 192, 192, 0.5)', level: 'A2' },
+            { name: 'Gold', icon: '🥇', color: '#ffd700', glow: 'rgba(255, 215, 0, 0.5)', level: 'B1' },
+            { name: 'Platinum', icon: '💠', color: '#00d4ff', glow: 'rgba(0, 212, 255, 0.5)', level: 'B2' },
+            { name: 'Emerald', icon: '💚', color: '#50c878', glow: 'rgba(80, 200, 120, 0.5)', level: 'C1' }
+        ];
+        
+        const TIERS = ['IV', 'III', 'II', 'I'];
+        const STARS_PER_TIER = 4;
+        
+        // ==================== GAME STATE ====================
+        let gameState = {
+            rankIndex: 0,
+            tierIndex: 0,
+            stars: 0,
+            wordsLearned: 0,
+            correctCount: 0,
+            wrongCount: 0,
+            streak: 0,
+            bestStreak: 0,
+            soundEnabled: true,
+            currentWords: [],
+            selectedEnglish: null,
+            selectedTurkish: null,
+            matchedPairs: 0
+        };
+        
+        // Load saved state
+        function loadState() {
+            const saved = localStorage.getItem('wordmatch_state');
+            if (saved) {
+                gameState = { ...gameState, ...JSON.parse(saved) };
+            }
+        }
+        
+        function saveState() {
+            localStorage.setItem('wordmatch_state', JSON.stringify(gameState));
+        }
+        
+        // ==================== INITIALIZATION ====================
+        function startGame() {
+            document.getElementById('onboarding').classList.add('hidden');
+            document.getElementById('app').style.display = 'block';
+            loadState();
+            updateRankDisplay();
+            updateStats();
+            renderJourneyMap();
+            loadNewWords();
+        }
+        
+        // ==================== RANK DISPLAY ====================
+        function updateRankDisplay() {
+            const rank = RANKS[gameState.rankIndex];
+            const tier = TIERS[gameState.tierIndex];
+            
+            // Update rank card
+            document.getElementById('rankName').textContent = rank.name;
+            document.getElementById('rankTier').textContent = `Tier ${tier}`;
+            document.getElementById('rankIcon').textContent = rank.icon;
+            document.getElementById('levelBadge').textContent = `${rank.level} Seviyesi`;
+            
+            // Update colors
+            document.documentElement.style.setProperty('--current-rank-color', rank.color);
+            document.documentElement.style.setProperty('--current-rank-glow', rank.glow);
+            
+            // Update shield gradient
+            document.getElementById('gradStop1').setAttribute('stop-color', rank.color);
+            document.getElementById('gradStop2').setAttribute('stop-color', shadeColor(rank.color, -30));
+            
+            // Update stars
+            const starsContainer = document.getElementById('starsContainer');
+            starsContainer.innerHTML = '';
+            for (let i = 0; i < STARS_PER_TIER; i++) {
+                const star = document.createElement('span');
+                star.className = `star ${i < gameState.stars ? 'filled' : 'empty'}`;
+                star.textContent = '⭐';
+                starsContainer.appendChild(star);
+            }
+            
+            // Update progress
+            const wordsPerRank = getWordsForCurrentRank().length;
+            const wordsInRank = getWordsLearnedInRank();
+            const percent = Math.round((wordsInRank / wordsPerRank) * 100);
+            
+            document.getElementById('progressText').textContent = `${wordsInRank} / ${wordsPerRank} kelime`;
+            document.getElementById('progressPercent').textContent = `${percent}%`;
+            document.getElementById('progressFill').style.width = `${percent}%`;
+        }
+        
+        function shadeColor(color, percent) {
+            const num = parseInt(color.replace('#', ''), 16);
+            const amt = Math.round(2.55 * percent);
+            const R = (num >> 16) + amt;
+            const G = (num >> 8 & 0x00FF) + amt;
+            const B = (num & 0x0000FF) + amt;
+            return '#' + (0x1000000 + (R < 255 ? R < 1 ? 0 : R : 255) * 0x10000 +
+                (G < 255 ? G < 1 ? 0 : G : 255) * 0x100 +
+                (B < 255 ? B < 1 ? 0 : B : 255)).toString(16).slice(1);
+        }
+        
+        // ==================== WORDS MANAGEMENT ====================
+        function getWordsForCurrentRank() {
+            const rank = RANKS[gameState.rankIndex];
+            return WORDS.filter(w => w.level === rank.level);
+        }
+        
+        function getWordsLearnedInRank() {
+            // Calculate based on total learned and rank thresholds
+            let total = 0;
+            for (let i = 0; i < gameState.rankIndex; i++) {
+                total += WORDS.filter(w => w.level === RANKS[i].level).length;
+            }
+            return Math.max(0, gameState.wordsLearned - total);
+        }
+        
+        function loadNewWords() {
+            const rankWords = getWordsForCurrentRank();
+            const wordsInRank = getWordsLearnedInRank();
+            
+            // Get 5 random unlearned words
+            const unlearnedWords = rankWords.slice(wordsInRank);
+            const shuffled = [...unlearnedWords].sort(() => Math.random() - 0.5);
+            gameState.currentWords = shuffled.slice(0, 5);
+            gameState.matchedPairs = 0;
+            gameState.selectedEnglish = null;
+            gameState.selectedTurkish = null;
+            
+            renderWords();
+        }
+        
+        function renderWords() {
+            const englishContainer = document.getElementById('englishWords');
+            const turkishContainer = document.getElementById('turkishWords');
+            
+            englishContainer.innerHTML = '';
+            turkishContainer.innerHTML = '';
+            
+            // Shuffle Turkish words
+            const shuffledTurkish = [...gameState.currentWords].sort(() => Math.random() - 0.5);
+            
+            gameState.currentWords.forEach((word, index) => {
+                const enCard = createWordCard(word.en, 'english', index);
+                englishContainer.appendChild(enCard);
+            });
+            
+            shuffledTurkish.forEach((word, index) => {
+                const trCard = createWordCard(word.tr, 'turkish', index, word.en);
+                turkishContainer.appendChild(trCard);
+            });
+        }
+        
+        function createWordCard(text, type, index, matchKey = null) {
+            const card = document.createElement('div');
+            card.className = 'word-card';
+            card.dataset.type = type;
+            card.dataset.index = index;
+            card.dataset.text = text;
+            if (matchKey) card.dataset.match = matchKey;
+            
+            card.innerHTML = `
+                <span class="word-text">${text}</span>
+                ${type === 'english' ? '<span class="speak-icon">🔊</span>' : ''}
+            `;
+            
+            card.addEventListener('click', () => handleCardClick(card, type, text));
+            
+            return card;
+        }
+        
+        // ==================== GAME LOGIC ====================
+        function handleCardClick(card, type, text) {
+            if (card.classList.contains('matched')) return;
+            
+            // Speak English words
+            if (type === 'english') {
+                speak(text);
+            }
+            
+            // Clear previous selection of same type
+            document.querySelectorAll(`.word-card[data-type="${type}"].selected`).forEach(c => {
+                c.classList.remove('selected');
+            });
+            
+            card.classList.add('selected');
+            
+            if (type === 'english') {
+                gameState.selectedEnglish = text;
+            } else {
+                gameState.selectedTurkish = { text, match: card.dataset.match };
+            }
+            
+            // Check for match
+            if (gameState.selectedEnglish && gameState.selectedTurkish) {
+                checkMatch();
+            }
+        }
+        
+        function checkMatch() {
+            const isCorrect = gameState.selectedEnglish === gameState.selectedTurkish.match;
+            
+            const enCards = document.querySelectorAll('.word-card[data-type="english"].selected');
+            const trCards = document.querySelectorAll('.word-card[data-type="turkish"].selected');
+            
+            if (isCorrect) {
+                // Correct match
+                playSound('correct');
+                enCards.forEach(c => {
+                    c.classList.remove('selected');
+                    c.classList.add('correct');
+                    setTimeout(() => c.classList.add('matched'), 500);
+                });
+                trCards.forEach(c => {
+                    c.classList.remove('selected');
+                    c.classList.add('correct');
+                    setTimeout(() => c.classList.add('matched'), 500);
+                });
+                
+                gameState.correctCount++;
+                gameState.streak++;
+                gameState.matchedPairs++;
+                
+                if (gameState.streak > gameState.bestStreak) {
+                    gameState.bestStreak = gameState.streak;
+                }
+                
+                document.getElementById('streakCount').textContent = gameState.streak;
+                
+                // Check if word is newly learned
+                handleWordLearned();
+                
+                // Check if round complete
+                if (gameState.matchedPairs >= gameState.currentWords.length) {
+                    setTimeout(loadNewWords, 1000);
+                }
+            } else {
+                // Wrong match
+                playSound('wrong');
+                enCards.forEach(c => {
+                    c.classList.remove('selected');
+                    c.classList.add('wrong');
+                    setTimeout(() => c.classList.remove('wrong'), 500);
+                });
+                trCards.forEach(c => {
+                    c.classList.remove('selected');
+                    c.classList.add('wrong');
+                    setTimeout(() => c.classList.remove('wrong'), 500);
+                });
+                
+                gameState.wrongCount++;
+                gameState.streak = 0;
+                document.getElementById('streakCount').textContent = 0;
+            }
+            
+            // Reset selection
+            gameState.selectedEnglish = null;
+            gameState.selectedTurkish = null;
+            
+            updateStats();
+            saveState();
+        }
+        
+        function handleWordLearned() {
+            gameState.wordsLearned++;
+            
+            const rankWords = getWordsForCurrentRank().length;
+            const wordsInRank = getWordsLearnedInRank();
+            const progress = wordsInRank / rankWords;
+            
+            // Calculate stars (each 25% = 1 star for current tier)
+            const tierProgress = (gameState.tierIndex * 0.25) + (progress * 0.25);
+            const newStars = Math.floor((wordsInRank / rankWords) * STARS_PER_TIER);
+            
+            // Star earned
+            if (newStars > gameState.stars) {
+                gameState.stars = newStars;
+                showNotification('⭐', 'Yıldız kazandın!');
+                
+                // Check tier promotion (4 stars = next tier)
+                if (gameState.stars >= STARS_PER_TIER) {
+                    gameState.stars = 0;
+                    
+                    if (gameState.tierIndex < TIERS.length - 1) {
+                        gameState.tierIndex++;
+                        showTierOverlay();
+                    } else {
+                        // Rank promotion
+                        if (gameState.rankIndex < RANKS.length - 1) {
+                            gameState.tierIndex = 0;
+                            gameState.rankIndex++;
+                            showRankOverlay();
+                        }
+                    }
+                }
+            }
+            
+            updateRankDisplay();
+            renderJourneyMap();
+        }
+        
+        // ==================== STATS ====================
+        function updateStats() {
+            document.getElementById('correctCount').textContent = gameState.correctCount;
+            document.getElementById('wrongCount').textContent = gameState.wrongCount;
+            document.getElementById('totalLearned').textContent = gameState.wordsLearned;
+            document.getElementById('bestStreak').textContent = gameState.bestStreak;
+            
+            const total = gameState.correctCount + gameState.wrongCount;
+            const accuracy = total > 0 ? Math.round((gameState.correctCount / total) * 100) : 0;
+            document.getElementById('accuracy').textContent = `${accuracy}%`;
+        }
+        
+        // ==================== JOURNEY MAP ====================
+        function renderJourneyMap() {
+            const container = document.getElementById('journeyMap');
+            container.innerHTML = '';
+            
+            RANKS.forEach((rank, index) => {
+                const node = document.createElement('div');
+                node.className = 'journey-node';
+                
+                if (index < gameState.rankIndex) {
+                    node.classList.add('completed');
+                } else if (index === gameState.rankIndex) {
+                    node.classList.add('current');
+                } else {
+                    node.classList.add('locked');
+                }
+                
+                node.innerHTML = `
+                    <div class="journey-icon">${rank.icon}</div>
+                    <div class="journey-label">${rank.name}</div>
+                `;
+                
+                container.appendChild(node);
+            });
+        }
+        
+        // ==================== OVERLAYS ====================
+        function showNotification(icon, text) {
+            const notification = document.getElementById('notification');
+            notification.querySelector('.notification-icon').textContent = icon;
+            document.getElementById('notificationText').textContent = text;
+            notification.classList.add('show');
+            setTimeout(() => notification.classList.remove('show'), 2000);
+        }
+        
+        function showStarOverlay() {
+            document.getElementById('starOverlay').classList.add('show');
+        }
+        
+        function hideStarOverlay() {
+            document.getElementById('starOverlay').classList.remove('show');
+        }
+        
+        function showTierOverlay() {
+            const rank = RANKS[gameState.rankIndex];
+            const tier = TIERS[gameState.tierIndex];
+            document.getElementById('newTierTitle').textContent = `${rank.name} ${tier}`;
+            document.getElementById('tierMessage').textContent = 'Yeni tier\'a yükseldin!';
+            document.getElementById('tierOverlay').classList.add('show');
+        }
+        
+        function hideTierOverlay() {
+            document.getElementById('tierOverlay').classList.remove('show');
+        }
+        
+        function showRankOverlay() {
+            const rank = RANKS[gameState.rankIndex];
+            document.getElementById('newRankTitle').textContent = rank.name;
+            document.getElementById('rankMessage').textContent = `${rank.level} seviyesine ulaştın!`;
+            document.getElementById('rankOverlay').classList.add('show');
+        }
+        
+        function hideRankOverlay() {
+            document.getElementById('rankOverlay').classList.remove('show');
+        }
+        
+        // ==================== SOUND ====================
+        function playSound(type) {
+            if (!gameState.soundEnabled) return;
+            
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            if (type === 'correct') {
+                oscillator.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
+                oscillator.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.1); // E5
+                oscillator.frequency.setValueAtTime(783.99, audioCtx.currentTime + 0.2); // G5
+            } else {
+                oscillator.frequency.setValueAtTime(200, audioCtx.currentTime);
+            }
+            
+            gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+            
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + 0.3);
+        }
+        
+        function toggleSound() {
+            gameState.soundEnabled = !gameState.soundEnabled;
+            document.getElementById('soundBtn').textContent = gameState.soundEnabled ? '🔊' : '🔇';
+            saveState();
+        }
+        
+        // ==================== TTS ====================
+        function speak(text) {
+            if (!gameState.soundEnabled || !('speechSynthesis' in window)) return;
+            
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'en-US';
+            utterance.rate = 0.8;
+            
+            const voices = speechSynthesis.getVoices();
+            const englishVoice = voices.find(v => v.lang.startsWith('en'));
+            if (englishVoice) utterance.voice = englishVoice;
+            
+            speechSynthesis.speak(utterance);
+        }
+        
+        // Load voices
+        if ('speechSynthesis' in window) {
+            speechSynthesis.getVoices();
+            speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices();
+        }
+        
+        // Check if returning user
+        if (localStorage.getItem('wordmatch_state')) {
+            startGame();
+        }
+    </script>
+</body>
+</html>
