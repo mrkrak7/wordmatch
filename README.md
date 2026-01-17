@@ -9,7 +9,7 @@ WordMatch, İngilizce kelimeleri eğlenceli bir şekilde öğrenmenizi sağlayan
 ## ✨ Özellikler
 
 ### 🏆 Rank Sistemi (Mobile Legends Tarzı)
-- **Bronze** (A1) → **Silver** (A2) → **Gold** (B1) → **Platinum** (B2) → **Emerald** (C1)
+- **Bronze** (A1) → **Silver** (A2) → **Gold** (B1) → **Platinum** (B2) → **Diamond** (C1)
 - Her rank'te 4 tier: IV → III → II → I
 - Her tier için 4 yıldız toplanması gerekiyor
 
